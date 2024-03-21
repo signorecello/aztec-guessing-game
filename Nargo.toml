@@ -1,0 +1,10 @@
+[package]
+name = "guessing_game"
+authors = [ "" ]
+compiler_version = ">=0.18.0"
+type = "contract"
+
+[dependencies]
+aztec = { git = "https://github.com/AztecProtocol/aztec-packages/", tag = "master", directory = "noir-projects/aztec-nr/aztec" }
+value_note = { git = "https://github.com/AztecProtocol/aztec-packages/", tag = "master", directory = "noir-projects/aztec-nr/value-note" }
+address_note = { git = "https://github.com/AztecProtocol/aztec-packages/", tag = "master", directory = "noir-projects/aztec-nr/address-note" }
