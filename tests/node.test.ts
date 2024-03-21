@@ -9,38 +9,21 @@ describe('Account Tests', () => {
   let account: AccountManager;
   let wallet: AccountWallet;
 
-  const privateKey = GrumpkinScalar.fromString('0x1234');
+  const privateKey = GrumpkinScalar.random();
   const expectedPublicKey = derivePublicKey(privateKey).toString();
 
-  test('Can start the PXE server', async () => {
+  beforeAll(async () => {
     pxe = createPXEClient(pxeURL);
     const { chainId } = await pxe.getNodeInfo();
     expect(chainId).toBe(31337);
-  });
 
-  beforeEach(() => {
     const accountContract = new SingleKeyAccountContract(privateKey);
     account = new AccountManager(pxe, privateKey, accountContract);
-  });
-
-  test('Can create an account contract with a known address', async () => {
-    const publicKey = account.getCompleteAddress().publicKey.toString();
-    expect(publicKey).toEqual(expectedPublicKey);
-  });
-
-  test('Can deploy a contract with a known address', async () => {
     wallet = await account.register();
-    const publicKey = wallet.getCompleteAddress().publicKey.toString();
-    expect(publicKey).toEqual(expectedPublicKey);
   });
 
   test('Can deploy the game', async () => {
-    const game = await GuessingGameContract.deploy(
-      wallet,
-      AztecAddress.fromString('0x063f2ac22db40f44cced107ef8c55dd788831377d7b896d405929f909abdd0b1'),
-    )
-      .send()
-      .deployed();
+    const game = await GuessingGameContract.deploy(wallet, wallet.getCompleteAddress()).send().deployed();
     console.log(game);
     const publicKey = wallet.getCompleteAddress().publicKey.toString();
     expect(publicKey).toEqual(expectedPublicKey);

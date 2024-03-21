@@ -3,7 +3,6 @@ mod game;
 mod player_turn;
 
 contract GuessingGame {
-
     use dep::aztec::prelude::{
         AztecAddress, FunctionSelector, NoteHeader, NoteInterface, NoteGetterOptions, PrivateContext,
         Map, PublicMutable, PrivateImmutable, PrivateMutable, PrivateSet, PublicImmutable
@@ -11,14 +10,15 @@ contract GuessingGame {
     use dep::value_note::value_note::{ValueNote, VALUE_NOTE_LEN};
     use dep::address_note::address_note::{AddressNote, ADDRESS_NOTE_LEN};
     use dep::aztec::context::Context;
-    use dep::aztec::oracle::debug_log::{ debug_log };
+    use dep::aztec::oracle::debug_log::debug_log;
     use crate::player::Player;
     use crate::player_turn::PlayerTurn;
     use crate::game::Game;
 
     struct Storage {
         game_master: PublicImmutable<AztecAddress>,
-        lobby: PrivateSet<Player>,
+        lobby: PrivateSet<AddressNote>,
+        in_play: PrivateSet<Player>,
         games: Map<Field, PublicMutable<Game>>,
     }
 
@@ -31,9 +31,12 @@ contract GuessingGame {
 
     #[aztec(private)]
     fn register(player: AztecAddress, secret: Field) {
-        let mut p = Player::new(player, secret);
+        let gm = storage.game_master.read();
+        let mut p = AddressNote::new(player, gm);
         debug_log("inserting player");
         storage.lobby.insert(&mut p, true);
+        let mut player = Player::new(player, secret);
+        storage.in_play.insert(&mut player, true);
     }
 
     #[aztec(private)]
@@ -54,12 +57,12 @@ contract GuessingGame {
     fn turn(game_id: Field, guess: Field) {
         let game = storage.games.at(game_id).read();
         let options = NoteGetterOptions::new().set_limit(1);
-        let me = storage.lobby.get_notes(options)[0].unwrap_unchecked();
+        let me = storage.in_play.get_notes(options)[0].unwrap_unchecked();
         let didMatch = game.reveal(me);
         if (didMatch) {
-            storage.lobby.remove(me);
+            storage.in_play.remove(me);
         }
-        
+
         let opponent = game.get_opponent(context.msg_sender());
         let turn = PlayerTurn::new(opponent, guess);
 
