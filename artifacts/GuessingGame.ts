@@ -103,8 +103,8 @@ export class GuessingGameContract extends ContractBase {
     /** pair() */
     pair: (() => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** constructor(gm: struct) */
-    constructor: ((gm: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** register(address: struct, secret: field) */
+    register: ((address: AztecAddressLike, secret: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** turn(game_id: field, guess: field) */
     turn: ((game_id: FieldLike, guess: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
@@ -112,7 +112,7 @@ export class GuessingGameContract extends ContractBase {
     /** compute_note_hash_and_nullifier(contract_address: struct, nonce: field, storage_slot: field, note_type_id: field, serialized_note: array) */
     compute_note_hash_and_nullifier: ((contract_address: AztecAddressLike, nonce: FieldLike, storage_slot: FieldLike, note_type_id: FieldLike, serialized_note: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** register(player: struct, secret: field) */
-    register: ((player: AztecAddressLike, secret: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** constructor(gm: struct) */
+    constructor: ((gm: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
   };
 }

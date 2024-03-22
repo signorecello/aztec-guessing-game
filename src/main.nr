@@ -4,19 +4,17 @@ mod player_turn;
 
 contract GuessingGame {
     use dep::aztec::prelude::{
-        AztecAddress, FunctionSelector, NoteHeader, NoteInterface, NoteGetterOptions, PrivateContext,
-        Map, PublicMutable, PrivateImmutable, PrivateMutable, PrivateSet, PublicImmutable
+        AztecAddress, NoteGetterOptions,
+        Map, PublicMutable, PrivateSet, SharedImmutable
     };
-    use dep::value_note::value_note::{ValueNote, VALUE_NOTE_LEN};
     use dep::address_note::address_note::{AddressNote, ADDRESS_NOTE_LEN};
-    use dep::aztec::context::Context;
-    use dep::aztec::oracle::debug_log::debug_log;
+    use dep::aztec::oracle::debug_log::{debug_log, debug_log_format};
     use crate::player::Player;
     use crate::player_turn::PlayerTurn;
     use crate::game::Game;
 
     struct Storage {
-        game_master: PublicImmutable<AztecAddress>,
+        game_master: SharedImmutable<AztecAddress>,
         lobby: PrivateSet<AddressNote>,
         in_play: PrivateSet<Player>,
         games: Map<Field, PublicMutable<Game>>,
@@ -25,32 +23,35 @@ contract GuessingGame {
     #[aztec(public)]
     #[aztec(initializer)]
     fn constructor(gm: AztecAddress) {
-        debug_log("initializing contract");
         storage.game_master.initialize(gm)
     }
 
     #[aztec(private)]
-    fn register(player: AztecAddress, secret: Field) {
-        let gm = storage.game_master.read();
-        let mut p = AddressNote::new(player, gm);
-        debug_log("inserting player");
-        storage.lobby.insert(&mut p, true);
-        let mut player = Player::new(player, secret);
+    fn register(address: AztecAddress, secret: Field) {
+        let gm = storage.game_master.read_private();
+        debug_log("registering player");
+        debug_log_format("encrypting to {0}", [gm.to_field()]);
+        let mut address_note = AddressNote::new(address, gm);
+        storage.lobby.insert(&mut address_note, true);
+        let mut player = Player::new(address, secret);
         storage.in_play.insert(&mut player, true);
     }
 
     #[aztec(private)]
     fn pair() {
-        let options = NoteGetterOptions::new().set_limit(2);
+        let options = NoteGetterOptions::new();
+        debug_log("getting players");
         let mut pair = storage.lobby.get_notes(options);
-        storage.lobby.remove(pair[0].unwrap_unchecked());
-        storage.lobby.remove(pair[1].unwrap_unchecked());
+        debug_log("removing players from lobby");
+        // storage.lobby.remove(pair[0].unwrap_unchecked());
+        // storage.lobby.remove(pair[1].unwrap_unchecked());
 
-        let mut player1 = pair[0].unwrap_unchecked().owner;
-        let mut player2 = pair[1].unwrap_unchecked().owner;
+        // let mut player1 = pair[0].unwrap_unchecked().owner;
+        // let mut player2 = pair[1].unwrap_unchecked().owner;
 
-        let turn = PlayerTurn::new(player1, 0);
-        storage.games.at(0).write(Game::new([player1, player2], turn));
+        // debug_log("creating new turn");
+        // let turn = PlayerTurn::new(player1, 0);
+        // storage.games.at(0).write(Game::new([player1, player2], turn));
     }
 
     #[aztec(private)]
